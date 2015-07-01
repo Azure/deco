@@ -43,7 +43,6 @@
     ],
     "requireDotNotation": true,
     "requireLineFeedAtFileEnd": true,
-    "disallowMultipleVarDecl": true,
     "requireParenthesesAroundIIFE": true,
     "requireSpaceAfterBinaryOperators": true,
     "requireSpaceAfterKeywords": [
