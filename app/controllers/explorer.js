@@ -250,6 +250,51 @@ export default Ember.Controller.extend({
             this.set('selectedBlob', blob);
         },
 
+        deleteBlobs: function () {
+            var blobs = this.get('blobs'),
+                deleteCount = 0;
+
+            blobs.forEach(function (blob) {
+                if (blob.get('selected')) {
+                    deleteCount += 1;
+                }
+            });
+
+            if (deleteCount === 0) {
+                return;
+            }
+
+            // Setup values expected by delete modal
+            this.set('modalConfirmAction', 'deleteBlobData');
+            this.set('modalDeleteCount', deleteCount);
+            this.set('modalDeleteType', 'blob');
+
+            // Open delete prompt
+            Ember.$('#modal-delete').openModal();
+
+            // https://github.com/Dogfalo/materialize/issues/1532
+            // ugh!
+            var overlay = Ember.$('#lean-overlay');
+            overlay.detach();
+            Ember.$('.explorer-container').after(overlay);
+        },
+
+        deleteBlobData: function () {
+            var blobs = this.get('blobs'),
+                self = this;
+
+            blobs.forEach(function (blob) {
+                // check if this one is marked for deleting
+                if (blob.get('selected')){
+                    blob.deleteRecord();
+                    blob.save();
+                    if (blob === self.get('selectedBlob')) {
+                        self.set('selectBlob', null);
+                    }
+                }
+            });
+        },
+
         refreshBlobs: function () {
             var blobs = [],
                 self = this;

@@ -287,3 +287,98 @@ test('it should upload file to blob', function(assert) {
     });
   });
 });
+
+test('it should delete all but 1 blobs', function(assert) {
+
+  assert.expect(22);
+  App = startApp(null, assert);
+  store = App.__container__.lookup('store:main');
+  Ember.run(function(){
+      var newAccount = store.createRecord('account', {
+          name: 'Testaccount',
+          key: '5555-5555-5555-5555',
+          active: true
+      });
+  });
+
+  var controller = this.subject(),
+      initialBlobCount;
+
+  controller.store = store;
+  controller.set('searchQuery', 'testcontainer');
+
+  controller.addObserver('blobs', controller, () => {
+    
+    controller.get('blobs')
+    .then( blobs => {
+        var count = 0;
+        blobs.forEach(function (blob){
+        
+            if (count > 2) {
+              return;
+            }
+            blob.set('selected', true);
+            count++;
+        });
+        
+        initialBlobCount = blobs.get('length');
+        controller.send('deleteBlobData');
+
+        return controller.get('blobs');
+    })
+    .then( blobs => {
+      assert.ok(blobs.get('length') === initialBlobCount - 3);
+    });
+    
+  });
+
+  Ember.run( () => {
+    controller.get('containers')
+    .then(() => {
+      controller.set('activeContainer', 'testcontainer');      
+    });
+  });
+});
+
+test('it should delete no blobs', function(assert) {
+
+  assert.expect(13);
+  App = startApp(null, assert);
+  store = App.__container__.lookup('store:main');
+  Ember.run(function(){
+      var newAccount = store.createRecord('account', {
+          name: 'Testaccount',
+          key: '5555-5555-5555-5555',
+          active: true
+      });
+  });
+
+  var controller = this.subject(),
+      initialBlobCount;
+
+  controller.store = store;
+  controller.set('searchQuery', 'testcontainer');
+
+  controller.addObserver('blobs', controller, () => {
+    
+    controller.get('blobs')
+    .then( blobs => {
+        
+        initialBlobCount = blobs.get('length');
+        controller.send('deleteBlobData');
+
+        return controller.get('blobs');
+    })
+    .then( blobs => {
+      assert.ok(blobs.get('length') === initialBlobCount);
+    });
+    
+  });
+
+  Ember.run( () => {
+    controller.get('containers')
+    .then(() => {
+      controller.set('activeContainer', 'testcontainer');      
+    });
+  });
+});

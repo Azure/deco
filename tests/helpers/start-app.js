@@ -16,8 +16,55 @@ export default function startApp(attrs, assert) {
     var container = application.__container__;
     var nodeServices = container.lookup('service:node-services');
     nodeServices.set('azureStorage', {
+        
         createBlobService: function () {
             return {
+                entries: [{
+                    name: 'test-blob-1.mp4',
+                    properties: {
+                        'content-type': 'video/mpeg4',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                }, {
+                    name: 'test-blob-2.png',
+                    properties: {
+                        'content-type': 'image/png',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                }, {
+                    name: 'test-blob-3.mp4',
+                    properties: {
+                        'content-type': 'video/mpeg4',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                },
+                {
+                    name: 'test-blob-4.mp4',
+                    properties: {
+                        'content-type': 'video/mpeg4',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                },
+                {
+                    name: 'mydir1/mydir2/test-blob-4.mp3',
+                    properties: {
+                        'content-type': 'audio/mp3',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                },
+                {
+                    name: 'mydir1/test-blob-5.mp3',
+                    properties: {
+                        'content-type': 'audio/mp3',
+                        'content-length': 12313435,
+                        'last-modified': new Date(Date.now())
+                    }
+                }],
                 createBlockBlobFromLocalFile: function (containerName, blobName, path, callback) {
                     assert.ok(typeof containerName === 'string');
                     assert.ok(typeof blobName === 'string');
@@ -57,6 +104,28 @@ export default function startApp(attrs, assert) {
                 deleteContainer: function (containerName, callback) {
                     assert.ok(containerName !== null, 'expeceted arg containerName to be non-null');
                     assert.ok(callback !== null, 'expeceted arg callback to be non-null');
+                    return callback(null);
+                },
+                deleteBlob: function(containerName, blobName, callback) {
+                    console.log('DELETE CALLED!');
+                    assert.ok(typeof containerName === 'string', 'expeceted arg containerName to be string');
+                    assert.ok(typeof containerName === 'string', 'expeceted arg blobName to be string');
+                    assert.ok(typeof callback === 'function', 'expeceted arg callback to be function');
+
+                    var removeIndicies = [],
+                        self = this;
+
+                    this.entries.forEach( function(entry, index) {
+
+                        if (entry.name === blobName) {
+                            removeIndicies.push(index);
+                        }
+                    });
+
+                    removeIndicies.forEach( function(index) {
+                        self.entries.splice(index, 1);
+                    });
+
                     return callback(null);
                 },
                 getContainerProperties: function (containerName, callback) {
@@ -113,66 +182,21 @@ export default function startApp(attrs, assert) {
                     assert.ok(typeof options === 'object');
                     assert.ok(options.delimiter);
                     console.log('called with prefix: ' + prefix);
-                    var entries = [{
-                            name: 'test-blob-1.mp4',
-                            properties: {
-                                'content-type': 'video/mpeg4',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        }, {
-                            name: 'test-blob-2.png',
-                            properties: {
-                                'content-type': 'image/png',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        }, {
-                            name: 'test-blob-3.mp4',
-                            properties: {
-                                'content-type': 'video/mpeg4',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        },
-                        {
-                            name: 'test-blob-4.mp4',
-                            properties: {
-                                'content-type': 'video/mpeg4',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        },
-                        {
-                            name: 'mydir1/mydir2/test-blob-4.mp3',
-                            properties: {
-                                'content-type': 'audio/mp3',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        },
-                        {
-                            name: 'mydir1/test-blob-5.mp3',
-                            properties: {
-                                'content-type': 'audio/mp3',
-                                'content-length': 12313435,
-                                'last-modified': new Date(Date.now())
-                            }
-                        }];
+                    
 
                     var matches = [];
 
                     if(prefix === '') {
-                        matches.push(entries[0]);
-                        matches.push(entries[1]);
-                        matches.push(entries[2]);
-                        matches.push(entries[3]);
+                        matches.push(this.entries[0]);
+                        matches.push(this.entries[1]);
+                        matches.push(this.entries[2]);
+                        matches.push(this.entries[3]);
                     }
                     else if(prefix === '/mydir1') {
-                        matches.push(entries[5]);
+                        matches.push(this.entries[5]);
                     }
                     else if(prefix === '/mydir1/mydir2') {
-                        matches.push(entries[4]);
+                        matches.push(this.entries[4]);
                     }
                     return callback(null, {
                         entries: matches
