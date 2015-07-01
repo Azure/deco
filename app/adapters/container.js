@@ -8,11 +8,6 @@ export default DS.Adapter.extend({
 
     find: function (store, type, id, snapshot) {
         var self = this;
-
-        if (!snapshot || !snapshot.attr('name')) {
-            return;
-        }
-
         return new Ember.RSVP.Promise(function (resolve, reject) {
             accountUtils.getActiveAccount(store).then(function (account) {
                 var blobService = self.get('azureStorage').createBlobService(account.get('name'),
