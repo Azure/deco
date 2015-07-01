@@ -14,7 +14,7 @@ export default Ember.Controller.extend({
     activeContainer: null,
     blobs: [],
     subDirectories: [],
-    pathSegments: [{ name: '/' }],      // individal directory names of current path
+    pathSegments: [{name: '/'}],      // individal directory names of current path
     allBlobSelected: false,
     newContainerEntryDisplay: false,
     modalFileUploadPath: '',            // path used for the local file path for upload
@@ -167,7 +167,7 @@ export default Ember.Controller.extend({
         },
 
         changeSubDirectory: function (directory) {
-            var pathSegs = [ { name: '/' } ];
+            var pathSegs = [{name: '/'}];
 
             // we have recieved a literal path
             directory.name.split('/').forEach(segment => {
@@ -175,7 +175,7 @@ export default Ember.Controller.extend({
                     return;
                 }
 
-                pathSegs.push({ name: segment + '/' });
+                pathSegs.push({name: segment + '/'});
             });
 
             this.set('pathSegments', pathSegs);
@@ -203,7 +203,6 @@ export default Ember.Controller.extend({
                 self.store.find('container', activeContainer).then(result => {
                     self.set('modalDefaultUploadPath', result.get('name') + ':/' + self.get('currentPath') + fileName);
                 });
-
             });
 
             nwInput.click();
@@ -233,7 +232,7 @@ export default Ember.Controller.extend({
             handleInputDirectory = function (dir) {
                 blobs.forEach(function (blob) {
                     // check if this one is marked for download
-                    if (blob.get('selected')){
+                    if (blob.get('selected')) {
                         var fileName = blob.get('name').replace(/^.*[\\\/]/, '');
                         var targetPath = dir + '/' + fileName;
                         blob.toFile(targetPath);
@@ -303,7 +302,7 @@ export default Ember.Controller.extend({
 
             blobs.forEach(function (blob) {
                 // check if this one is marked for deleting
-                if (blob.get('selected')){
+                if (blob.get('selected')) {
                     blob.deleteRecord();
                     blob.save();
                     if (blob === self.get('selectedBlob')) {
@@ -351,11 +350,15 @@ export default Ember.Controller.extend({
         },
 
         createContainer: function () {
-            var newContainer = this.store.createRecord('container', { name: this.get('newContainerName'), id: this.get('newContainerName') });
+            var newContainer = this.store.createRecord('container', {name: this.get('newContainerName'), id: this.get('newContainerName')});
             var self = this;
-            return newContainer.save().then(function (){
+            return newContainer.save().then(function () {
                 return self.set('newContainerEntryDisplay', false);
             });
+        },
+
+        goHome: function () {
+            this.transitionToRoute('welcome');
         }
     }
 });
