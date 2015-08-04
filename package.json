@@ -80,6 +80,6 @@
   "dependencies": {
     "azure-storage": "^0.4.3",
     "open": "0.0.5",
-    "nw": "0.12.2"
+    "nw": "0.12.3"
   }
 }
