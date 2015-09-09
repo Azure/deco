@@ -4,6 +4,7 @@ import stringResources from '../utils/string-resources';
 
 export default Ember.Component.extend({
   application: Ember.inject.service(),
+  store: Ember.inject.service(),
   notifications: Ember.inject.service('notifications'),
   onOffContent: [false, true],
   settings: Ember.computed.alias('application.serviceSettings'),
@@ -11,8 +12,80 @@ export default Ember.Component.extend({
   showMetrics: true,
   showAbout: false,
   showCORS: false,
+  showNewRule: false,
+  showEditRule: false,
+  currentRule: Ember.computed.alias('settings.Cors.CorsRule.firstObject'),
   minuteMetricsDisabled: Ember.computed.not('settings.MinuteMetrics.Enabled'),
   hourMetricsDisabled: Ember.computed.not('settings.HourMetrics.Enabled'),
+
+  _corsString: function (property) {
+
+    var displayString = '';
+
+    if (!this.get(property)) {
+      return;
+    }
+    this.get(property).forEach(origin => {
+        console.log(origin);
+        displayString += origin.get('Value') + ';';
+    });
+    return displayString;
+  },
+
+  _assembleCorsArray: function (value) {
+
+    var parts = value.split(';'),
+        fragArray = [];
+
+    parts.forEach(origin => {
+      if (origin.length <= 0) {
+        return;
+      }
+      fragArray.push(this.get('store').createFragment('stringValue', { Value: origin }));
+    });
+
+    return fragArray;
+  },
+
+  _updateCorsRules: function () {
+
+    var allowedOrigins = this._assembleCorsArray(this.get('selectedCorsOriginString')),
+        allowedHeaders = this._assembleCorsArray(this.get('selectedCorsHeaderString')),
+        allowedMethods = this._assembleCorsArray(this.get('selectedCorsMethodString'));
+
+    if (!this.get('settings.Cors.CorsRule')) {
+      this.set('settings.Cors.CorsRule', []);
+    }
+
+    if (this.get('selectedCorsOriginString.length') > 0 ||
+      this.get('selectedCorsHeaderString.length') > 0 ||
+      this.get('selectedCorsMethodString.length') > 0) {
+
+      if (this.get('showNewRule')) {
+        var fragment = this.get('store').createFragment('corsRule', {
+          AllowedOrigins: allowedOrigins,
+          AllowedHeaders: allowedHeaders,
+          AllowedMethods: allowedMethods,
+          MaxAgeInSeconds: parseInt(this.get('selectedMaxAgeSeconds'))
+        });
+
+        this.get('settings.Cors.CorsRule').addFragment(fragment);
+      } else if (this.get('showEditRule') && this.get('currentRule')) {
+        this.set('currentRule.AllowedOrigins', allowedOrigins);
+        this.set('currentRule.AllowedMethods', allowedMethods);
+        this.set('currentRule.AllowedHeaders', allowedHeaders);
+        this.set('currentRule.MaxAgeInSeconds', parseInt(this.get('selectedMaxAgeSeconds')));
+      }
+    }
+  },
+
+  selectedCorsOriginString: '',
+
+  selectedCorsHeaderString: '',
+
+  selectedCorsMethodString: '',
+
+  selectedMaxAgeSeconds: '500',
 
   hourMetricsRetentionDisabled: function () {
     return !this.get('settings.HourMetrics.RetentionPolicy.Enabled') || !this.get('settings.HourMetrics.Enabled');
@@ -26,8 +99,12 @@ export default Ember.Component.extend({
 
   showUpdateButton: function () {
     return this.get('application.serviceSettings.hasDirtyAttributes') &&
-      (!this.get('showAbout'));
-  }.property('application.serviceSettings.hasDirtyAttributes', 'showAbout'),
+      (!this.get('showAbout')) || (this.get('selectedCorsOriginString').length > 0 ||
+      this.get('selectedCorsHeaderString').length > 0 ||
+      this.get('selectedCorsMethodString').length > 0 ||
+      this.get('selectedMaxAgeSeconds').length > 0);
+  }.property('application.serviceSettings.hasDirtyAttributes', 'showAbout', 'selectedCorsOriginString',
+    'selectedCorsHeaderString', 'selectedCorsMethodString', 'selectedMaxAgeSeconds'),
 
   init: function () {
     this._renderSelect();
@@ -53,6 +130,29 @@ export default Ember.Component.extend({
   },
 
   actions: {
+
+    deleteCorsRule: function () {
+      this.get('settings.Cors.CorsRule').removeFragment(this.get('currentRule'));
+    },
+
+    newCorsRule: function () {
+      this.set('showNewRule', true);
+      this.set('showEditRule', false);
+      this.set('selectedCorsOriginString', '');
+      this.set('selectedCorsHeaderString', '');
+      this.set('selectedCorsMethodString', '');
+      this.set('selectedMaxAgeSeconds', '');
+    },
+
+    selectRule: function () {
+      this.set('selectedCorsOriginString', this._corsString('currentRule.AllowedOrigins'));
+      this.set('selectedCorsHeaderString', this._corsString('currentRule.AllowedHeaders'));
+      this.set('selectedCorsMethodString', this._corsString('currentRule.AllowedMethods'));
+      this.set('selectedMaxAgeSeconds', this.get('currentRule.MaxAgeInSeconds'));
+      this.set('showEditRule', true);
+      this.set('showNewRule', false);
+    },
+
     actionMetrics: function () {
       this._enableTab('showMetrics');
     },
@@ -95,6 +195,7 @@ export default Ember.Component.extend({
         this.set('settings.Logging.RetentionPolicy', null);
       }
 
+      this._updateCorsRules();
       notifications.addPromiseNotification(this.get('application.serviceSettings').save(),
         Notification.create({
           type: 'UpdateServiceSettings',

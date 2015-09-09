@@ -1,10 +1,12 @@
-{{!-- <div class="collection" {{action 'change' on='change'}}>
+<div class="collection collectionContainer" {{action 'change' on='change'}}>
   {{#each content key="@index" as |item|}}
-    <option value="{{item}}" active={{is-equal item selectedValue}}>
-      {{allowedOriginsString}}
-    </option>
+    <a {{action 'select' item}} class="collection-item {{if (is-equal item selectedValue) 'active'}}" >
+      {{#each item.AllowedOrigins as |origin|}}
+        {{origin.Value}};
+      {{/each}}
+    </a>
   {{/each}}
   {{#if label}}
     <label>{{label}}</label>
   {{/if}}
-</div> --}}
+</div>

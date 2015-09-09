@@ -1,7 +1,8 @@
 import Ember from 'ember';
 
-var azureStorage = null;
-var fs = null;
+var azureStorage = null,
+    fs = null,
+    path = null;
 
 /**
  * Check if running in nw, if not, we're probably running as a test,
@@ -10,6 +11,7 @@ var fs = null;
 if (window.requireNode) {
     azureStorage = window.requireNode('azure-storage');
     fs = window.requireNode('fs');
+    path = window.requireNode('path');
 }
 
 /**
@@ -18,6 +20,7 @@ if (window.requireNode) {
 export default Ember.Service.extend({
     azureStorage: azureStorage,
     fs: fs,
+    path: path,
 
     /**
      * Get the currently active account

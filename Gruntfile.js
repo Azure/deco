@@ -7,6 +7,12 @@ module.exports = function (grunt) {
         require('load-grunt-tasks')(grunt, {scope: ['devDependencies', 'dependencies']});
     }
 
+    // Get Version
+    function getVersion () {
+        var githash = require('githash');
+        var version = process.env.RELEASE_VERSION ? process.env.RELEASE_VERSION : githash();
+    }
+
     var files = ['app/**/*.js', 'Brocfile.js'];
     // Tagged builds get their own folders. live builds just go to live folder
     var cdnPath = process.env.RELEASE_VERSION ? process.env.RELEASE_VERSION : 'live';
@@ -27,28 +33,48 @@ module.exports = function (grunt) {
                     x: 120,
                     y: 430,
                     type: 'file',
-                    path: './webkitbuilds/azureexplorer/osx64/azureexplorer.app'
+                    path: './builds/storageexplorer-darwin-x64/storageexplorer.app'
                 }]
             },
             target: {
-                dest: './webkitbuilds/azureexplorer/osx64/azureexplorer.dmg'
+                dest: './builds/storageexplorer-darwin-x64/storageexplorer.dmg'
+            }
+        },
+        copy: {
+            app: {
+                expand: true,
+                src: ['electron.js', 'package.json', 'dist/**', 'node_modules/azure-storage/**', 'node_modules/fs-extra/**'],
+                dest: 'electronbuildcache/'
+            },
+            version_file: {
+                src: ['./.version'],
+                dest: 'electronbuildcache/dist/version'
+            }
+        },
+        'create-windows-installer': {
+            ia32: {
+                appDirectory: 'builds/storageexplorer-win32-ia32',
+                outputDirectory: 'builds/installer32',
+                exe: 'storageexplorer.exe',
+                iconUrl: 'http://raw.githubusercontent.com/azure-storage/xplat/master/public/icon/ase.ico',
+                setupIcon: 'public/icon/ase.ico',
+                authors: 'Felix Rieseberg, Steven Edouard, Rita Zhang',
+                loadingGif: 'postcompile/windows/installer.gif'
+            },
+            x64: {
+                appDirectory: 'builds/storageexplorer-win32-x64',
+                outputDirectory: 'builds/installer64',
+                exe: 'storageexplorer.exe',
+                iconUrl: 'http://raw.githubusercontent.com/azure-storage/xplat/master/public/icon/ase.ico',
+                setupIcon: 'public/icon/ase.ico',
+                authors: 'Felix Rieseberg, Steven Edouard, Rita Zhang',
+                loadingGif: 'postcompile/windows/installer.gif'
             }
         },
         jshint: {
             files: files,
             options: {
                 jshintrc: './.jshintrc'
-            }
-        },
-        js_beautify: {
-            default_options: {
-                options: {
-                    end_with_newline: true,
-                    max_preserve_newlines: 1
-                },
-                files: {
-                    'application_files': ['app/**/*.js']
-                }
             }
         },
         jscs: {
@@ -60,122 +86,87 @@ module.exports = function (grunt) {
                 esnext: true
             }
         },
-        // Execute individual builds with the commands below
-        // Warning: If trying to compile Windows with Icon 
-        // on OS X / Linux, you'll need Wine.
-        nwjs: {
+        electron: {
             osx: {
                 options: {
-                    platforms: ['osx64'],
-                    buildDir: './webkitbuilds',
-                    macIcns: './public/icon/ase.icns',
-                    version: 'v0.12.3'
-                },
-                src: ['./nwbuildcache/**/*']
-            },
-            linux: {
-                options: {
-                    platforms: ['linux64'],
-                    buildDir: './webkitbuilds',
-                    version: 'v0.12.3'
-                },
-                src: ['./nwbuildcache/**/*']
+                    name: 'storageexplorer',
+                    platform: 'darwin',
+                    arch: 'x64',
+                    dir: 'electronbuildcache',
+                    out: 'builds',
+                    version: '0.32.1',
+                    overwrite: true,
+                    icon: 'public/icon/ase.icns',
+                    'app-version': getVersion(),
+                    'build-version': getVersion()
+                }
             },
             windows: {
                 options: {
-                    platforms: ['win32'],
-                    buildDir: './webkitbuilds',
-                    version: 'v0.12.3'
-                },
-                src: ['./nwbuildcache/**/*']
+                    name: 'storageexplorer',
+                    platform: 'win32',
+                    arch: 'all',
+                    dir: 'electronbuildcache',
+                    out: 'builds',
+                    version: '0.32.1',
+                    overwrite: true,
+                }
             },
             windowsWithIcon: {
                 options: {
-                    platforms: ['win32'],
-                    buildDir: './webkitbuilds',
-                    winIco: './public/icon/ase.ico',
-                    version: 'v0.12.3'
-                },
-                src: ['./nwbuildcache/**/*']
-            }
+                    name: 'storageexplorer',
+                    platform: 'win32',
+                    arch: 'all',
+                    dir: 'electronbuildcache',
+                    out: 'builds',
+                    version: '0.32.1',
+                    overwrite: true,
+                    icon: 'public/icon/ase.ico',
+                    asar: true,
+                    'version-string': {
+                        ProductName: 'Azure Storage Explorer',
+                        ProductVersion: getVersion(),
+                        FileDescription: 'Azure Storage Explorer',
+                        ProductVersion: 'Azure Storage Explorer.exe'
+                    }
+                }
+            },
+            linux: {
+                options: {
+                    name: 'storageexplorer',
+                    platform: 'linux',
+                    arch: 'ia32',
+                    dir: 'electronbuildcache',
+                    out: 'builds',
+                    version: '0.32.1',
+                    overwrite: true
+                }
+            },
         },
         exec: {
             build: {
-                command: 'ember build --environment=production'
+                command: 'node ./node_modules/ember-cli/bin/ember build --environment=production'
             },
-            dmgLicense: {
-                command: 'python ./postcompile/osx/licenseDMG.py ./webkitbuilds/azureexplorer/osx64/azureexplorer.dmg ./LICENSE'
+            flatten: {
+              command: 'node ../node_modules/flatten-packages/bin/flatten .',
+              cwd: './electronbuildcache'
             }
-        },
-        copy: {
-            nwbuildcache: {
-                expand: true,
-                src: ['dist/**'],
-                dest: 'nwbuildcache/'
-            },
-            azure_storage: {
-                expand: true,
-                src: ['node_modules/azure-storage/**'],
-                dest: 'nwbuildcache/'
-            },
-            version_file: {
-                src: ['./.version'],
-                dest: 'nwbuildcache/version'
-            },
-            memorystream: {
-                expand: true,
-                src: ['node_modules/memorystream/**'],
-                dest: 'nwbuildcache/'
-            },
-            open: {
-                expand: true,
-                src: ['node_modules/open/**'],
-                dest: 'nwbuildcache/'
-            },
-            pack: {
-                src: './package.json',
-                dest: './nwbuildcache/package.json'
-            },
-            bin_osx: {
-                src: './bin/darwin/64/ffmpegsumo.so',
-                dest: './webkitbuilds/azureexplorer/osx64/azureexplorer.app/Contents/Frameworks/nwjs Framework.framework/Libraries/ffmpegsumo.so'
-            },
-            bin_linux: {
-                src: './bin/linux/64/libffmpegsumo.so',
-                dest: './webkitbuilds/azureexplorer/linux64/libffmpegsumo.so'
-            },
-            bin_windows: {
-                src: './bin/windows/32/ffmpegsumo.dll',
-                dest: './webkitbuilds/azureexplorer/win32/ffmpegsumo.dll'
-            },
-            license_linux: {
-                src: './LICENSE',
-                dest: './webkitbuilds/azureexplorer/linux64/'
-            },
-            license_osx: {
-                src: './LICENSE',
-                dest: './webkitbuilds/azureexplorer/osx64/'
-            },
-            license_windows: {
-                src: './LICENSE',
-                dest: './webkitbuilds/azureexplorer/win32/'
-            },
         },
         zip: {
             linux: {
-                cwd: './webkitbuilds/azureexplorer/linux64',
-                src: ['./webkitbuilds/azureexplorer/linux64/**/*'],
-                dest: './webkitbuilds/azureexplorer/linux64/build.zip'
+                cwd: './builds/storageexplorer-linux-ia32',
+                src: ['./builds/storageexplorer-linux-ia32/**/*'],
+                dest: './builds/storageexplorer-linux-ia32/build.zip'
             },
             osx: {
-                cwd: './webkitbuilds/azureexplorer/osx64',
-                src: ['./webkitbuilds/azureexplorer/osx64/**/*'],
-                dest: './webkitbuilds/azureexplorer/osx64/build.zip'
+                cwd: './builds/storageexplorer-darwin-x64',
+                src: ['./builds/storageexplorer-darwin-x64/**/*'],
+                dest: './builds/storageexplorer-darwin-x64/build.zip'
             },
             windows: {
-                cwd: './webkitbuilds/azureexplorer/win32',
-                src: ['./webkitbuilds/azureexplorer/win32/**/*'],
-                dest: './webkitbuilds/azureexplorer/win32/build.zip'
+                cwd: './builds/installer32',
+                src: ['./builds/installer32/*'],
+                dest: './builds/installer32/build.zip'
             }
         },
         'if': {
@@ -196,7 +187,7 @@ module.exports = function (grunt) {
             linux: {
                 options: {
                     containerName: 'builds', // container name in blob
-                    folder: cdnPath, // path within container
+                    folder: cdnPath + '/linux32', // path within container
                     zip: false, // gzip files if they become smaller after zipping, content-encoding header will change if file is zipped
                     deleteExistingBlobs: false, // true means recursively deleting anything under folder
                     concurrentUploadThreads: 10, // number of concurrent uploads, choose best for your network condition
@@ -207,14 +198,14 @@ module.exports = function (grunt) {
                     testRun: false // test run - means no blobs will be actually deleted or uploaded, see log messages for details
                 },
                 src: [
-                    './linux64/build.zip'
+                    './build.zip'
                 ],
-                cwd: './webkitbuilds/azureexplorer/'
+                cwd: './builds/storageexplorer-linux-ia32/'
             },
             osx: {
                 options: {
                     containerName: 'builds', // container name in blob
-                    folder: cdnPath, // path within container
+                    folder: cdnPath + '/darwin64', // path within container
                     zip: false, // gzip files if they become smaller after zipping, content-encoding header will change if file is zipped
                     deleteExistingBlobs: false, // true means recursively deleting anything under folder
                     concurrentUploadThreads: 10, // number of concurrent uploads, choose best for your network condition
@@ -225,14 +216,14 @@ module.exports = function (grunt) {
                     testRun: false // test run - means no blobs will be actually deleted or uploaded, see log messages for details
                 },
                 src: [
-                    './osx64/build.zip'
+                    './build.zip'
                 ],
-                cwd: './webkitbuilds/azureexplorer'
+                cwd: './builds/storageexplorer-darwin-x64/'
             },
             windows: {
                 options: {
                     containerName: 'builds', // container name in blob
-                    folder: cdnPath, // path within container
+                    folder: cdnPath + '/win32', // path within container
                     zip: false, // gzip files if they become smaller after zipping, content-encoding header will change if file is zipped
                     deleteExistingBlobs: false, // true means recursively deleting anything under folder
                     concurrentUploadThreads: 10, // number of concurrent uploads, choose best for your network condition
@@ -243,9 +234,9 @@ module.exports = function (grunt) {
                     testRun: false // test run - means no blobs will be actually deleted or uploaded, see log messages for details
                 },
                 src: [
-                    './win32/build.zip'
+                    './build.zip'
                 ],
-                cwd: './webkitbuilds/azureexplorer'
+                cwd: './builds/storageexplorer-win32-ia32/'
             }
         },
         'file-creator': {
@@ -258,24 +249,22 @@ module.exports = function (grunt) {
                 }
             }
         },
-        clean: ['./nwbuildcache', './dist', './webkitbuilds'],
+        clean: ['./electronbuildcache', './dist', './builds'],
     });
 
-    grunt.registerTask('codestyle', ['jshint', 'jscs']);
-    grunt.registerTask('test', ['codestyle']);
-    grunt.registerTask('default', ['test']);
-    grunt.registerTask('beautify', ['js_beautify']);
-    grunt.registerTask('copyForBuild', ['copy:nwbuildcache', 'copy:azure_storage', 'copy:memorystream', 'copy:open', 'copy:pack', 'copy:version_file']);
+    grunt.registerTask('test', ['jshint', 'jscs']);
+    grunt.registerTask('copyForBuild', ['copy:app', 'copy:version_file']);
     grunt.registerTask('prebuild', ['clean', 'exec:build', 'file-creator:version_file', 'copyForBuild']);
-    grunt.registerTask('compileOSX', ['nwjs:osx', 'copy:bin_osx', 'appdmg', 'exec:dmgLicense']);
-    grunt.registerTask('compileLinux', ['nwjs:linux', 'copy:bin_linux', 'copy:license_linux']);
-    grunt.registerTask('compileWindows', ['nwjs:windows', 'copy:bin_windows', 'copy:license_windows']);
-    grunt.registerTask('compileWindowsWithIcon', ['nwjs:windowsWithIcon', 'copy:bin_windows']);
-    grunt.registerTask('compile', ['prebuild', 'compileOSX', 'compileWindows', 'compileLinux']);
+    grunt.registerTask('osx', ['clean', 'prebuild', 'electron:osx', 'appdmg']);
+    grunt.registerTask('linux', ['prebuild', 'electron:linux']);
+    grunt.registerTask('windows', ['prebuild', 'exec:flatten', 'electron:windowsWithIcon', 'create-windows-installer']);
+    grunt.registerTask('compile', ['prebuild', 'electron:osx', 'appdmg', 'electron:linux', 'electron:windows', 'create-windows-installer']);
 
     // Development Builds
     // To deploy a build with an official build number, set env var RELEASE_VERSION to release number
     // otherwise application is tagged with git hash
-    grunt.registerTask('compileDevBuild', ['prebuild', 'nwjs:osx', 'copy:bin_osx', 'nwjs:windows', 'copy:bin_windows', 'nwjs:linux', 'copy:bin_linux', 'copy:license_windows', 'copy:license_osx', 'copy:license_linux']);
-    grunt.registerTask('createDevBuild', ['compileDevBuild', 'zip', 'if:trusted-deploy-to-azure-cdn']);
+    grunt.registerTask('createUnixDevBuild', ['prebuild', 'exec:flatten', 'electron:osx', 'electron:linux', 'zip:osx', 'zip:linux']);
+    grunt.registerTask('deployUnixDevBuild', ['if:trusted-deploy-to-azure-cdn:linux', 'if:trusted-deploy-to-azure-cdn:osx']);
+    grunt.registerTask('createWinDevBuild', ['prebuild', 'exec:flatten', 'electron:windowsWithIcon', 'zip:windows']);
+    grunt.registerTask('deployWinDevBuild', ['if:trusted-deploy-to-azure-cdn:windows']);
 };

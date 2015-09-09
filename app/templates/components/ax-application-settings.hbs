@@ -1,6 +1,6 @@
 <div id="modal-app-settings" class="modal" >
-    {{ax-modal-navbar modalTitle="Settings" tab1="Metrics" tab2="Logging" tab3="About" target=this}}
-    <div class="modal-content properties-dialog settings-dialog">
+    {{ax-modal-navbar modalTitle="Settings" tab1="Metrics" tab2="Logging" tab3="CORS" tab4="About" target=this}}
+    <div class="modal-content settings-dialog properties-dialog">
         {{#if showMetrics}}
           <p>Use the Settings below to enable <a {{action "open" "https://msdn.microsoft.com/en-us/library/azure/hh343270.aspx" target=applicationController}} href="">Storage Analytics</a> on your storage account</p>
           <table class="striped properties">
@@ -15,7 +15,7 @@
                   </td>
                   <td>
                     <label class="active" for="minute-metrics-enabled">Enabled</label>
-                    {{ax-select nanme="minute-metrics-enabled" content=onOffContent value=settings.MinuteMetrics.Enabled}}
+                    {{ax-select name="minute-metrics-enabled" content=onOffContent value=settings.MinuteMetrics.Enabled}}
                   </td>
               </tr>
               <tr>
@@ -76,10 +76,39 @@
               </tr>
           </table>
         {{else if showCORS}}
-{{!--           {{ax-collection value=settings.Cors.Cors}} --}}
+          {{ax-collection action="selectRule" content=settings.Cors.CorsRule selectedValue=currentRule}}
+          <div class="row">
+            <a {{action "newCorsRule"}} {{bind-attr disabed=loading}} class="waves-effect waves-light btn"><i class="mdi-action-launch left"></i>New Rule</a>
+            <a {{action "deleteCorsRule"}} {{bind-attr disabed=loading}} class="waves-effect waves-light btn delete"><i class="mdi-action-delete left"></i>Delete Rule</a>
+          </div>
+          {{#if showNewRule}}
+            Enter a New Rule:
+          {{/if}}
+          {{#if showEditRule}}
+            Edit Rule:
+          {{/if}}
+          <div class="row">
+              <div class="row corsInput">
+                {{input placeholder="http://domain1.com;http://domain2.com" value=selectedCorsOriginString id="allowed_origins" type="text" class="validate"}}
+                <label for="allowed_origins">Allowed Origins</label>
+              </div>
+              <div class="row corsInput">
+                {{input placeholder="GET;POST" value=selectedCorsMethodString id="allowed_methods" type="text" class="validate"}}
+                <label for="allowed_methods">Allowed Methods</label>
+              </div>
+              <div class="row corsInput">
+                {{input placeholder="x-ms-header1;x-ms-header2" value=selectedCorsHeaderString id="allowed_headers" type="text" class="validate"}}
+                <label for="allowed_headers">Allowed Headers</label>
+              </div>
+              <div class="row corsInput">
+              {{input placeholder="1000" type="text" value=selectedMaxAgeSeconds id="max_age"}}
+              <label for="max_age">Max Age (seconds)</label>
+              </div>
+            </div>
+
         {{else if showAbout}}
           <p><strong>Azure Storage Explorer</strong></p>
-          <p><strong>version: {{versionNumber}}</strong></p>
+          <p><strong>build number: {{application.versionNumber}}</strong></p>
           <p>If you find any issues or bugs, <a {{action "open" "https://github.com/azure-storage/xplat/issues/" target=applicationController}} href="">please let us know</a>!</p>
           <p>(C) Copyright 2015 Microsoft Coporation.</p>
           <p>The source code for this app is released under the GPLv3 License. For more information, please visit <a {{action "open" "http://storageexplorer.com"}}>storageexplorer.com</a>.</p>

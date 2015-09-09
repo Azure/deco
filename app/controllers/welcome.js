@@ -1,4 +1,5 @@
 import Ember from 'ember';
+import config from '../config/environment';
 
 /**
  * The controller for the welcome view - controlling the creation/addition/connection of and
@@ -8,7 +9,6 @@ export default Ember.Controller.extend({
     application: Ember.inject.service(),
     activeConnection: Ember.computed.alias('application.activeConnection'),
     loading: false,
-    dnsSuffixContent: ['blob.core.windows.net', 'blob.core.chinacloudapi.cn'],
 
     /**
      * If the model is changed, we check if there's reason to go straight to
@@ -59,6 +59,7 @@ export default Ember.Controller.extend({
          */
         toggleEdit: function () {
             this.toggleProperty('editUi');
+            this.set('selectedEditAccount', this.get('selectedAccount'));
             this.send('selectize');
 
             if (this.get('editUi')) {
@@ -74,6 +75,9 @@ export default Ember.Controller.extend({
             var editAccountName = this.get('editAccountName');
             var editAccountKey = this.get('editAccountKey');
             var editAccountDnsSuffix = this.get('editAccountDnsSuffix');
+            if (!editAccountDnsSuffix || editAccountDnsSuffix.length === 0) {
+                editAccountDnsSuffix = config.dnsSuffixContent[0];
+            }
             this.store.findRecord('account', editAccount).then(result => {
                 if (result) {
                     result.set('name', editAccountName);
@@ -84,6 +88,9 @@ export default Ember.Controller.extend({
 
                 this.send('toggleEdit');
             });
+
+            // set selection to the current account
+            this.set('selectedAccount', this.get('selectedEditAccount'));
 
             appInsights.trackEvent('EditAccount');
         },
@@ -119,6 +126,10 @@ export default Ember.Controller.extend({
             var name = this.get('account_name');
             var key = this.get('account_key');
             var dnsSuffix = this.get('account_dnsSuffix');
+            if (!dnsSuffix || dnsSuffix.length === 0) {
+                dnsSuffix = config.dnsSuffixContent[0];
+            }
+
             var newAccount = this.store.createRecord('account', {
                 name: name,
                 key: key,
@@ -131,6 +142,10 @@ export default Ember.Controller.extend({
             this.set('account_name', '');
             this.set('account_key', '');
             this.set('dnsSuffix', '');
+
+            // set the selected account to what was just added
+            this.set('selectedAccount', this.get('account_name'));
+
             appInsights.trackEvent('AddNewAccount');
         },
 
@@ -148,8 +163,8 @@ export default Ember.Controller.extend({
             }
 
             this.store.findAll('account').then(function (accounts) {
-                var i;
-                var account;
+                var i,
+                account;
 
                 if (accounts && accounts.content && accounts.content.length > 0) {
                     for (i = 0; i < accounts.content.length; i = i + 1) {
@@ -163,8 +178,9 @@ export default Ember.Controller.extend({
                     }
                 }
 
-                self.store.find('serviceSettings', 'settings')
+                self.store.find('serviceSettings', activeAccountId)
                 .then(settings => {
+                    console.log('break here');
                     self.set('application.serviceSettings', settings);
                     self.transitionToRoute('explorer');
                 })

@@ -7,9 +7,9 @@
 /dist
 /tmp
 /build
-/nwbuildcache
+/electronbuildcache
 /cache
-/webkitbuilds
+/builds
 
 # dependencies
 /node_modules

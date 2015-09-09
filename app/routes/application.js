@@ -49,16 +49,6 @@ export default Ember.Route.extend({
         },
 
         /**
-         * Open a file or a link in the user's preferred app
-         * @param {string} uri
-         * @param {string} application name
-         */
-        open: function () {
-            var nodeOpen = window.requireNode('open');
-            nodeOpen(...arguments);
-        },
-
-        /**
          * Enable or disable usage statistics (anonymized)
          */
         toggleUsageStatistics: function (track) {
@@ -100,7 +90,7 @@ export default Ember.Route.extend({
                 if (error.host) {
                     storageDnsSuffix = error.host;
                 } else {
-                    storageDnsSuffix = process.env.AZURE_STORAGE_DNS_SUFFIX || 'blob.core.windows.net';
+                    storageDnsSuffix = 'blob.core.windows.net';
                 }
 
                 if (error.code && (error.code === 'ENOTFOUND' || error.code === 'OutOfRangeInput')) {

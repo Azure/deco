@@ -1,124 +1,204 @@
-/**
- * This setups NW.js's window menu
- * @param {boolean} handlers - Are tools available?
- */
-function Menu(handlers) {
-    var gui = window.requireNode('nw.gui'),
-        open = window.requireNode('open'),
-        menu = new gui.Menu({type: 'menubar'}),
-        toolsEnabled = (handlers),
-        seperator = () => {
-            return new gui.MenuItem({type: 'separator'});
-        };
-
-    // Mac Menu
-    if (process && process.platform === 'darwin') {
-        menu.createMacBuiltin('Azure Storage Explorer');
-    }
-
-    // Blob & Container Tools
-    let tools = new gui.MenuItem({label: 'Tools'});
-    let toolsSubMenu = new gui.Menu();
-    let toolsItems = {
-        uploadBlob: new gui.MenuItem({label: 'Upload Blobs', enabled: toolsEnabled}),
-        downloadBlobs: new gui.MenuItem({label: 'Download Blobs', enabled: toolsEnabled}),
-        deleteBlobs: new gui.MenuItem({label: 'Delete Selected Blobs', enabled: toolsEnabled}),
-        copyBlobs: new gui.MenuItem({label: 'Copy Selected Blobs', enabled: toolsEnabled}),
-        refreshBlobs: new gui.MenuItem({label: 'Refresh Blobs', enabled: toolsEnabled}),
-        addContainer: new gui.MenuItem({label: 'Create Container', enabled: toolsEnabled}),
-        removeContainer: new gui.MenuItem({label: 'Delete Current Container', enabled: toolsEnabled}),
-        switchAccount: new gui.MenuItem({label: 'Switch Account', enabled: toolsEnabled})
-    };
-
-    // If we have handlers for the tools thing, add them
-    if (handlers) {
-        toolsItems.uploadBlob.click = handlers.uploadBlob;
-        toolsItems.downloadBlobs.click = handlers.downloadBlobs;
-        toolsItems.deleteBlobs.click = handlers.deleteBlobs;
-        toolsItems.copyBlobs.click = handlers.copyBlobs;
-        toolsItems.refreshBlobs.click = handlers.refreshBlobs;
-        toolsItems.addContainer.click = handlers.addContainer;
-        toolsItems.removeContainer.click = handlers.removeContainer;
-        toolsItems.switchAccount.click = handlers.switchAccount;
-    }
-
-    toolsSubMenu.append(toolsItems.uploadBlob);
-    toolsSubMenu.append(toolsItems.downloadBlobs);
-    toolsSubMenu.append(toolsItems.deleteBlobs);
-    toolsSubMenu.append(toolsItems.copyBlobs);
-    toolsSubMenu.append(toolsItems.refreshBlobs);
-    toolsSubMenu.append(seperator());
-    toolsSubMenu.append(toolsItems.addContainer);
-    toolsSubMenu.append(toolsItems.removeContainer);
-    toolsSubMenu.append(seperator());
-    toolsSubMenu.append(toolsItems.switchAccount);
-    tools.submenu = toolsSubMenu;
-
-    // Help Tools
-    let help = new gui.MenuItem({label: 'Help'});
-    let helpSubMenu = new gui.Menu();
-    let helpItems = {
-        homepage: new gui.MenuItem({
-            label: 'Homepage',
-            click: () => open('http://storageexplorer.com')
-        }),
-        storageDocumentation: new gui.MenuItem({
-            label: 'Azure Storage Documentation',
-            click: () => open('http://azure.microsoft.com/en-us/documentation/services/storage/')
-        }),
-        azureDocumentation: new gui.MenuItem({
-            label: 'Azure Documentation',
-            click: () => open('http://azure.microsoft.com/en-us/documentation/')
-        }),
-        reportIssues: new gui.MenuItem({
-            label: 'Report Bugs & Issues',
-            click: () => open('https://github.com/azure-storage/xplat/issues')
-        }),
-        emberInspector: new gui.MenuItem({
-            label: 'Ember Inspector',
-            click: function () {
-                let s = document.createElement('script');
-                s.src = 'http://ember-extension.s3.amazonaws.com/dist_bookmarklet/load_inspector.js';
-                document.body.appendChild(s);
-            }
-        }),
-        chromeTools: new gui.MenuItem({
-            label: 'Chromium Tools',
-            click: function () {
-                require('nw.gui').Window.get().showDevTools();
-            }
-        })
-    };
-
-    helpSubMenu.append(helpItems.homepage);
-    helpSubMenu.append(seperator());
-    helpSubMenu.append(helpItems.storageDocumentation);
-    helpSubMenu.append(helpItems.azureDocumentation);
-    helpSubMenu.append(helpItems.reportIssues);
-    helpSubMenu.append(seperator());
-    helpSubMenu.append(helpItems.emberInspector);
-    helpSubMenu.append(helpItems.chromeTools);
-    help.submenu = helpSubMenu;
-
-    menu.append(tools);
-    menu.append(help);
-
-    return menu;
-}
-
-var windowMenu = {
+export default {
     /**
-     * Attach the menu as nw.js' window menu
+     * Attach the menu as Electron's window menu
      * @param {boolean} handlers - Are tools available?
      */
     setup: function (handlers) {
         handlers = handlers || false;
 
-        var gui = window.requireNode('nw.gui');
-        var menu = new Menu(handlers);
+        var remote = requireNode('remote'),
+            Menu = remote.require('menu'),
+            toolsEnabled = (handlers);
 
-        gui.Window.get().menu = menu;
+        let template = [{
+            label: 'Edit',
+            submenu: [{
+                label: 'Undo',
+                accelerator: 'CmdOrCtrl+Z',
+                role: 'undo'
+            }, {
+                label: 'Redo',
+                accelerator: 'Shift+CmdOrCtrl+Z',
+                role: 'redo'
+            }, {
+                type: 'separator'
+            }, {
+                label: 'Cut',
+                accelerator: 'CmdOrCtrl+X',
+                role: 'cut'
+            }, {
+                label: 'Copy',
+                accelerator: 'CmdOrCtrl+C',
+                role: 'copy'
+            }, {
+                label: 'Paste',
+                accelerator: 'CmdOrCtrl+V',
+                role: 'paste'
+            }, {
+                label: 'Select All',
+                accelerator: 'CmdOrCtrl+A',
+                role: 'selectall'
+            }]
+        }, {
+            label: 'Tools',
+            submenu: [{
+                label: 'Upload Blobs',
+                enabled: toolsEnabled,
+                click: handlers.uploadBlob
+            },
+            {
+                label: 'Download Blobs',
+                enabled: toolsEnabled,
+                click: handlers.downloadBlobs
+            },
+            {
+                label: 'Delete Selected Blobs',
+                enabled: toolsEnabled,
+                click: handlers.deleteBlobs
+            },
+            {
+                label: 'Copy Selected Blobs',
+                enabled: toolsEnabled,
+                click: handlers.copyBlobs
+            },
+            {
+                label: 'Refresh Blobs',
+                enabled: toolsEnabled,
+                click: handlers.refreshBlobs
+            },
+            {
+                label: 'Create Container',
+                enabled: toolsEnabled,
+                click: handlers.addContainer
+            },
+            {
+                label: 'Delete Current Container',
+                enabled: toolsEnabled,
+                click: handlers.removeContainer
+            },
+            {
+                label: 'Switch Account',
+                enabled: toolsEnabled,
+                click: handlers.switchAccount
+            }]
+        }, {
+            label: 'View',
+            submenu: [{
+                label: 'Reload Storage Explorer',
+                accelerator: 'CmdOrCtrl+R',
+                click: function (item, focusedWindow) {
+                    if (focusedWindow) {
+                        focusedWindow.reload();
+                    }
+                }
+            }, {
+                label: 'Toggle Full Screen',
+                accelerator: (function () {
+                    if (process.platform === 'darwin') {
+                        return 'Ctrl+Command+F';
+                    } else {
+                        return 'F11';
+                    }
+                })(),
+                click: function (item, focusedWindow) {
+                    if (focusedWindow) {
+                        focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+                    }
+                }
+            }, {
+                label: 'Toggle Developer Tools',
+                accelerator: (function () {
+                    if (process.platform === 'darwin') {
+                        return 'Alt+Command+I';
+                    } else {
+                        return 'Ctrl+Shift+I';
+                    }
+                })(),
+                click: function (item, focusedWindow) {
+                    if (focusedWindow) {
+                        focusedWindow.toggleDevTools();
+                    }
+                }
+            }]
+        }, {
+            label: 'Window',
+            role: 'window',
+            submenu: [{
+                label: 'Minimize',
+                accelerator: 'CmdOrCtrl+M',
+                role: 'minimize'
+            }]
+        }, {
+            label: 'Help',
+            role: 'help',
+            submenu: [{
+                label: 'Learn More',
+                click: function () {
+                    requireNode('shell').openExternal('http://storageexplorer.com');
+                }
+            }, {
+                label: 'Azure Storage Documentation',
+                click: function () {
+                    requireNode('shell').openExternal('http://azure.microsoft.com/en-us/documentation/services/storage/');
+                }
+            }, {
+                label: 'Azure Documentation',
+                click: function () {
+                    requireNode('shell').openExternal('http://azure.microsoft.com/en-us/documentation/');
+                }
+            }, {
+                label: 'Report Bugs and Issues',
+                click: function () {
+                    requireNode('shell').openExternal('https://github.com/azure-storage/xplat/issues/');
+                }
+            }]
+        }];
+
+        if (process.platform === 'darwin') {
+            template.unshift({
+                label: 'Azure Storage Explorer',
+                submenu: [{
+                    label: 'About Azure Storage Explorer',
+                    role: 'about'
+                }, {
+                    type: 'separator'
+                }, {
+                    label: 'Services',
+                    role: 'services',
+                    submenu: []
+                }, {
+                    type: 'separator'
+                }, {
+                    label: 'Hide ' + name,
+                    accelerator: 'Command+H',
+                    role: 'hide'
+                }, {
+                    label: 'Hide Others',
+                    accelerator: 'Command+Shift+H',
+                    role: 'hideothers:'
+                }, {
+                    label: 'Show All',
+                    role: 'unhide:'
+                }, {
+                    type: 'separator'
+                }, {
+                    label: 'Quit',
+                    accelerator: 'Command+Q',
+                    click: function () {
+                        let app = requireNode('remote').require('app');
+                        app.quit();
+                    }
+                }]
+            });
+            // Window menu.
+            template[3].submenu.push({
+                type: 'separator'
+            }, {
+                label: 'Bring All to Front',
+                role: 'front'
+            });
+        }
+
+        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
     }
 };
-
-export default windowMenu;

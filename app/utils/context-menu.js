@@ -1,60 +1,26 @@
 import Ember from 'ember';
-import config from '../config/environment';
 
 /**
- * This setups NW.js's context menu
+ * This setups Electron's context menu
  */
-function Menu() {
-    var gui = window.requireNode('nw.gui');
-    var menu = new gui.Menu();
+function ContextMenu() {
+    var remote = requireNode('remote'),
+        Menu = remote.require('menu'),
+        MenuItem = remote.require('menu-item');
 
-    // Commands
-    var cut = new gui.MenuItem({
-        label: 'Cut',
-        click: function () {
-            document.execCommand('cut');
-        }
-    });
-    var copy = new gui.MenuItem({
-        label: 'Copy',
-        click: function () {
-            document.execCommand('copy');
-        }
-    });
-    var paste = new gui.MenuItem({
-        label: 'Paste',
-        click: function () {
-            document.execCommand('paste');
-        }
-    });
-    var emberInspector = new gui.MenuItem({
-        label: 'Ember Inspector',
-        click: function () {
-            var s = document.createElement('script');
-            s.src = 'http://ember-extension.s3.amazonaws.com/dist_bookmarklet/load_inspector.js';
-            document.body.appendChild(s);
-        }
-    });
-    var devTools = new gui.MenuItem({
-        label: 'DevTools',
-        click: function () {
-            require('nw.gui').Window.get().showDevTools();
-        }
-    });
+    let newMenu = new Menu();
+    let cut = new MenuItem({label: 'Cut', click: () => document.execCommand('cut')});
+    let copy = new MenuItem({label: 'Copy', click: () => document.execCommand('copy')});
+    let paste = new MenuItem({label: 'Paste', click: () => document.execCommand('paste')});
 
-    menu.append(cut);
-    menu.append(copy);
-    menu.append(paste);
+    newMenu.append(cut);
+    newMenu.append(copy);
+    newMenu.append(paste);
 
-    if (config.environment === 'development' || config.environment === 'test') {
-        menu.append(emberInspector);
-        menu.append(devTools);
-    }
-
-    return menu;
+    return newMenu;
 }
 
-var contextMenu = {
+export default {
     /**
      * Opens the properties modal on the explorer controller, if a blob is contextMenu-clicked
      */
@@ -63,9 +29,11 @@ var contextMenu = {
             blobContext = (el.getAttribute('data-context') && el.getAttribute('data-context') === 'blob'),
             containerContext = (el.getAttribute('data-context') && el.getAttribute('data-context') === 'container');
 
+        let remote = requireNode('remote');
+        let MenuItem = remote.require('menu-item');
+
         if (blobContext) {
-            let gui = window.requireNode('nw.gui');
-            menu.append(new gui.MenuItem({
+            menu.append(new MenuItem({
                 label: 'Properties',
                 click: function () {
                     var controller = window.Azureexplorer.__container__.lookup('controller:explorer');
@@ -75,8 +43,7 @@ var contextMenu = {
                 }
             }));
         } else if (containerContext) {
-            let gui = window.requireNode('nw.gui');
-            menu.append(new gui.MenuItem({
+            menu.append(new MenuItem({
                 label: 'Properties',
                 click: function () {
                     var controller = window.Azureexplorer.__container__.lookup('controller:explorer');
@@ -92,13 +59,13 @@ var contextMenu = {
      * Listens to the contextmenu event to provide a customized context menu
      */
     setup: function () {
+        var remote = requireNode('remote');
+
         Ember.$(document).on('contextmenu', (e) => {
             e.preventDefault();
-            var menu = new Menu();
+            var menu = new ContextMenu();
             this._setup_property_menu(e, menu);
-            menu.popup(e.originalEvent.x, e.originalEvent.y);
+            menu.popup(remote.getCurrentWindow());
         });
     }
 };
-
-export default contextMenu;

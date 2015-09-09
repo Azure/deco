@@ -25,6 +25,7 @@ export default DS.Adapter.extend({
         .catch (error => {
             Ember.Logger.error(error);
             appInsights.trackException(error);
+            throw error;
         });
     },
 
@@ -63,6 +64,7 @@ export default DS.Adapter.extend({
         .catch (error => {
             Ember.Logger.error(error);
             appInsights.trackException(error);
+            throw error;
         });
     },
 
@@ -89,6 +91,7 @@ export default DS.Adapter.extend({
             .catch (error => {
                 Ember.Logger.error(error);
                 appInsights.trackException(error);
+                throw error;
             });
     },
 
@@ -155,6 +158,7 @@ export default DS.Adapter.extend({
         .catch (error => {
             Ember.Logger.error(error);
             appInsights.trackException(error);
+            throw error;
         });
     },
 

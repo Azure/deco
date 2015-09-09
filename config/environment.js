@@ -23,7 +23,9 @@ module.exports = function (environment) {
         sassOptions: {
             includePaths: ['bower_components/materialize/sass']
         },
-
+        
+        dnsSuffixContent: ['blob.core.windows.net', 'blob.core.chinacloudapi.cn'] , // set default dns suffix urls
+        
         /*jshint -W109 */
         contentSecurityPolicy: {
             'default-src': "'none'",
@@ -35,13 +37,14 @@ module.exports = function (environment) {
             'media-src': "'self'"
         }
         /*jshint +W109 */
+        
     };
 
     if (environment === 'test') {
         // Testem prefers this...
         ENV.baseURL = '/';
         ENV.locationType = 'none';
-
+        
         // keep test console output quieter
         ENV.APP.LOG_ACTIVE_GENERATION = false;
         ENV.APP.LOG_VIEW_LOOKUPS = false;

@@ -1,4 +1,5 @@
 import Ember from 'ember';
+import config from '../config/environment';
 
 /**
  * Ember Welcome Route
@@ -20,6 +21,7 @@ export default Ember.Route.extend({
 
     setupController: function (controller, model) {
         controller.set('model', model);
+        controller.set('dnsSuffixContent', config.dnsSuffixContent);
 
         if (!model || !model.content || model.content.length < 1) {
             return;

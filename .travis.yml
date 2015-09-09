@@ -10,7 +10,6 @@ cache:
     - node_modules
 
 before_install:
-  - export PATH=/usr/local/phantomjs-2.0.0/bin:$PATH
   - "npm config set spin false"
   - "npm install -g npm@^2"
 
@@ -21,8 +20,9 @@ install:
   - bower install
 
 script:
-  - xvfb-run ember nw:test
+  - xvfb-run ember electron:test
   - grunt test
+  - grunt createUnixDevBuild
 
 deploy:
   skip_cleanup: true

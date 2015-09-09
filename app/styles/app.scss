@@ -54,11 +54,13 @@ a:not(.btn-flat, .btn) {
 .modal {
     nav.props {
         background-color: $secondary-color;
-        
+
         a.brand-logo {
             font-size: 20px
         }
     }
+
+    max-height: 80%;
 }
 
 .select-dropdown {
@@ -69,7 +71,7 @@ a:not(.btn-flat, .btn) {
 }
 
 // Fix Materialize Select Cut-off issue
-div.card-content, div.card, 
+div.card-content, div.card,
 div.card .liquid-container:not(.liquid-animating),
 div.card .liquid-child:not(.liquid-animating) {
     overflow: visible!important;

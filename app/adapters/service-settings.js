@@ -7,6 +7,25 @@ export default DS.Adapter.extend({
   serializer: serializer.create(),
     nodeServices: Ember.inject.service(),
 
+    /**
+     * 'Unpacks' CORS rule for compatibilty with the ember data model for cors rule entity
+     * @param  {object} - The 'raw' rules object from azure API
+     * @return {object} - A 'compatible' rules object for ember-data.
+     */
+    _unpackCorsRule: function (rule) {
+      rule.AllowedOrigins.forEach((origin, index) => {
+        rule.AllowedOrigins[index] = { Value: origin };
+      });
+      rule.AllowedMethods.forEach((method, index) => {
+        rule.AllowedMethods[index] = { Value: method };
+      });
+      rule.AllowedHeaders.forEach((header, index) => {
+        rule.AllowedHeaders[index] = { Value: header };
+      });
+
+      return rule;
+    },
+
     _addRetentionPolicy: function (metricsObject, snapshot) {
       metricsObject.RetentionPolicy = {
           Enabled: snapshot.attr('RetentionPolicy').attr('Enabled')
@@ -15,6 +34,44 @@ export default DS.Adapter.extend({
       if (metricsObject.RetentionPolicy.Enabled) {
         metricsObject.RetentionPolicy.Days = snapshot.attr('RetentionPolicy').attr('Days');
       }
+    },
+
+    _transfromCors: function (snapshot) {
+
+      var cors = {
+            CorsRule: []
+          };
+
+      if (snapshot.attr('Cors') && snapshot.attr('Cors').attr('CorsRule')) {
+        var rules = snapshot.attr('Cors').attr('CorsRule');
+
+        rules.forEach(rule => {
+          var flattedOrigins = [],
+              flattedHeaders = [],
+              flattedMethods = [];
+
+          rule.attr('AllowedOrigins').forEach(origin => {
+            flattedOrigins.push(origin.attr('Value'));
+          });
+          rule.attr('AllowedMethods').forEach(method  => {
+            flattedMethods.push(method.attr('Value'));
+          });
+          rule.attr('AllowedHeaders').forEach(header => {
+            flattedHeaders.push(header.attr('Value'));
+          });
+
+          cors.CorsRule.push({
+            AllowedHeaders: flattedHeaders,
+            AllowedMethods: flattedMethods,
+            AllowedOrigins: flattedOrigins,
+            MaxAgeInSeconds: rule.attr('MaxAgeInSeconds'),
+            ExposedHeaders: []
+          });
+        });
+      }
+
+      return cors;
+
     },
 
     _transfromSettings: function (snapshot) {
@@ -44,11 +101,16 @@ export default DS.Adapter.extend({
         this._addRetentionPolicy(logging, snapshot.attr('Logging'));
       }
 
-      return {
+      var settings = {
         MinuteMetrics: minuteMetrics,
         HourMetrics: hourMetrics,
-        Logging: logging
+        Logging: logging,
+        Cors: this._transfromCors(snapshot)
       };
+
+      Ember.Logger.debug('updating settings:');
+      Ember.Logger.debug(settings);
+      return settings;
     },
     /**
      * Implementation of Ember Data's find method, returning the settings record
@@ -69,6 +131,15 @@ export default DS.Adapter.extend({
           settings.id = id;
           Ember.Logger.debug('found settings:');
           Ember.Logger.debug(settings);
+
+          if (settings.Cors.CorsRule) {
+            // each value needs to be unpacked from string array
+            // to be compatible for ember data.
+            settings.Cors.CorsRule.forEach(rule => {
+              this._unpackCorsRule(rule);
+            });
+          }
+
           return settings;
         })
         .catch (error => {
@@ -93,18 +164,27 @@ export default DS.Adapter.extend({
      * @return {Promise}
      */
     updateRecord: function (store, type, snapshot) {
+        var transformed;
         return accountUtils.getBlobService(this.store, this.get('azureStorage'))
         .then(blobService => {
           var setServiceProperties = Ember.RSVP.denodeify(blobService.setServiceProperties);
 
-          Ember.Logger.debug('updating settings:');
-          Ember.Logger.debug(this._transfromSettings(snapshot));
           // Azure SDK looks for all properties on object. Ember adds extra stuff
           // to objects so ensure a clean settings object gets to the sdk.
-          return setServiceProperties.call(blobService, this._transfromSettings(snapshot));
+          transformed = this._transfromSettings(snapshot);
+          Ember.Logger.debug('updating settings:');
+          Ember.Logger.debug(transformed);
+          return setServiceProperties.call(blobService, transformed);
         })
         .then(() => {
-          return snapshot;
+          transformed.id = snapshot.id;
+          transformed.Cors.CorsRule.forEach(rule => {
+            this._unpackCorsRule(rule);
+          });
+          return transformed;
+        })
+        .catch (error => {
+          throw error;
         });
     },
 

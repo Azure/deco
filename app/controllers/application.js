@@ -8,7 +8,7 @@ import config from '../config/environment';
 export default Ember.Controller.extend({
     nodeServices: Ember.inject.service(),
     application: Ember.inject.service(),
-
+    versionNumber: Ember.computed.alias('application.versionNumber'),
     /**
      * Init function, run on application launch: overrides the default drag & drop behavior
      */

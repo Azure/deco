@@ -52,6 +52,7 @@ export default DS.Adapter.extend({
         .catch (error => {
            Ember.Logger.error(error);
            appInsights.trackException(error);
+           throw error;
         });
     },
 
@@ -67,8 +68,8 @@ export default DS.Adapter.extend({
 
         return accountUtils.getBlobService(self.store, self.get('azureStorage'))
         .then(blobService => {
-            var createContainerIfNotExists = Ember.RSVP.denodeify(blobService.createContainerIfNotExists);
-            return createContainerIfNotExists.call(blobService, snapshot.get('name'));
+            var createContainer = Ember.RSVP.denodeify(blobService.createContainer);
+            return createContainer.call(blobService, snapshot.get('name'));
         })
         .then(() => {
             return snapshot;
@@ -76,6 +77,7 @@ export default DS.Adapter.extend({
         .catch (error => {
             Ember.Logger.error(error);
             appInsights.trackException(error);
+            throw error;
         });
     },
 
@@ -104,6 +106,7 @@ export default DS.Adapter.extend({
         .catch (error => {
             Ember.Logger.error(error);
             appInsights.trackException(error);
+            throw error;
         });
     },
 
@@ -166,6 +169,7 @@ export default DS.Adapter.extend({
             .catch (error => {
                 Ember.Logger.error(error);
                 appInsights.trackException(error);
+                throw error;
             });
     },
 

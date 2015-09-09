@@ -6,6 +6,7 @@ import config from '../config/environment';
  * Ember Explorer Route
  */
 export default Ember.Route.extend({
+    application: Ember.inject.service(),
     /**
      * Get all containers for the current account, set them as model
      */
@@ -111,6 +112,7 @@ export default Ember.Route.extend({
         },
 
         goHome: function () {
+            this.set('application.serviceSettings', {});
             this.transitionTo('welcome');
         }
     }

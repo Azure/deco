@@ -80,31 +80,68 @@ export default function startApp(attrs, assert, noNodeServices) {
         ]
     };
     var fakeSettings = {
-        HourMetrics: {
-            Enabled: false,
-            IncludeAPIs: false,
-            Days: 0,
-            RetentionPolicy: {
-              Enabled: false
-            }
-        },
-        MinuteMetrics: {
-            Enabled: false,
-            IncludeAPIs: false,
-            Days: 0,
-            RetentionPolicy: {
-              Enabled: false
-            }
-        },
-        Logging: {
-            Enabled: false,
-            Delete: false,
-            Read: false,
-            Write: false,
-            RetentionPolicy: {
-              Enabled: false
-            }
-        }
+      HourMetrics: {
+          Enabled: false,
+          IncludeAPIs: false,
+          Days: 0,
+          RetentionPolicy: {
+            Enabled: false
+          }
+      },
+      MinuteMetrics: {
+          Enabled: false,
+          IncludeAPIs: false,
+          Days: 0,
+          RetentionPolicy: {
+            Enabled: false
+          }
+      },
+      Logging: {
+          Enabled: false,
+          Delete: false,
+          Read: false,
+          Write: false,
+          RetentionPolicy: {
+            Enabled: false
+          }
+      },
+      Cors: {
+        CorsRule: [
+          {
+            AllowedHeaders: [
+              'x-ms-fake-header1',
+              'x-ms-fake-header2'
+            ],
+            AllowedMethods: [
+              'GET',
+              'PUT'
+            ],
+            AllowedOrigins: [
+              'http://testdomain.com',
+              'http://testdomain2.com'
+            ],
+            MaxAgeInSeconds: 1000,
+            ExposedHeaders: [
+            ]
+          },
+          {
+            AllowedHeaders: [
+              'x-ms-fake-header'
+            ],
+            AllowedMethods: [
+              'GET',
+              'PUT'
+            ],
+            AllowedOrigins: [
+              'http://testdomain3.com',
+              'http://testdomain4.com'
+            ],
+            MaxAgeInSeconds: 1000,
+            ExposedHeaders: [
+            ]
+          }
+        ]
+      }
     };
     nodeServices.set('azureStorage', {
         BlobService: {
@@ -245,7 +282,7 @@ export default function startApp(attrs, assert, noNodeServices) {
                     });
                 },
 
-                createContainerIfNotExists: function (containerName, callback) {
+                createContainer: function (containerName, callback) {
                     assert.ok(containerName !== null, 'expected arg containerName to be non-null');
                     assert.ok(containerName !== '', 'expected arg containerName to be non-empty');
                     assert.ok(callback !== null, 'expected arg callback to be non-null');
@@ -377,7 +414,10 @@ export default function startApp(attrs, assert, noNodeServices) {
                 },
 
                 setBlobProperties: function (containerName, blobName, properties, callback) {
-                    return callback();
+                    return callback(null, {
+                      container: containerName,
+                      blob: blobName
+                    });
                 },
 
                 getContainerAcl: function(containerName, callback) {

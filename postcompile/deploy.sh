@@ -1,3 +1,3 @@
 #!/bin/bash
 
-grunt createDevBuild
+grunt deployUnixDevBuild

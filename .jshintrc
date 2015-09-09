@@ -41,6 +41,8 @@
         "nitrogen": true,
         "QUnit": true,
         "toast": true,
-        "appInsights": true
+        "appInsights": true,
+        "requireNode": true,
+        "app": true
     }
 }
