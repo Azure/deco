@@ -4,7 +4,7 @@
   "description": "A cross-platform tool to explore Azure Storage Accounts",
   "scripts": {
     "start": "ember electron",
-    "test": "ember build && grunt test && ember electron:test"
+    "test": "grunt test && node ./node_modules/ember-cli/bin/ember electron:test"
   },
   "repository": "https://github.com/azure-storage/xplat",
   "engines": {
