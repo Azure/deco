@@ -164,9 +164,9 @@ module.exports = function (grunt) {
                 dest: './builds/storageexplorer-darwin-x64/build.zip'
             },
             windows: {
-                cwd: './builds/storageexplorer-win32-ia32',
-                src: ['./builds/storageexplorer-win32-ia32/**/*'],
-                dest: './builds/storageexplorer-win32-ia32/build.zip'
+                cwd: './builds/installer32',
+                src: ['./builds/installer32/*'],
+                dest: './builds/installer32/build.zip'
             }
         },
         'if': {
@@ -236,7 +236,7 @@ module.exports = function (grunt) {
                 src: [
                     './build.zip'
                 ],
-                cwd: './builds/storageexplorer-win32-ia32/'
+                cwd: './builds/installer32/'
             }
         },
         'file-creator': {
@@ -263,7 +263,8 @@ module.exports = function (grunt) {
     // Development Builds
     // To deploy a build with an official build number, set env var RELEASE_VERSION to release number
     // otherwise application is tagged with git hash
-    grunt.registerTask('compileDevBuild', ['prebuild', 'exec:flatten', 'electron:osx', 'electron:windows', 'electron:linux']);
-    grunt.registerTask('createDevBuild', ['compileDevBuild', 'zip']);
-    grunt.registerTask('deployDevBuild', ['if:trusted-deploy-to-azure-cdn']);
+    grunt.registerTask('createUnixDevBuild', ['prebuild', 'exec:flatten', 'electron:osx', 'electron:linux', 'zip:osx', 'zip:linux']);
+    grunt.registerTask('deployUnixDevBuild', ['if:trusted-deploy-to-azure-cdn:linux', 'if:trusted-deploy-to-azure-cdn:osx']);
+    grunt.registerTask('createWinDevBuild', ['prebuild', 'exec:flatten', 'electron:windowsWithIcon', 'zip:windows']);
+    grunt.registerTask('deployWinDevBuild', ['if:trusted-deploy-to-azure-cdn:windows']);
 };
