@@ -154,6 +154,22 @@ export default Ember.Controller.extend({
         );
     },
 
+	/**
+	 * Validates a name which sould be DNS ok
+	 * @param {string} name
+	 * @return {boolean}
+	 */
+	containerNameIsValid: function (name){
+		if ('$root' === name || '$logs' === name){
+			return true;
+		}
+
+		let rv = '^(([a-z\d]((-(?=[a-z\d]))|([a-z\d])){2,62}))|(\$root)|(\$logs)$';
+		let regex = new RegExp(rv);
+		var result = regex.test(name);
+		return result;
+	},
+
     actions: {
         /**
          * Handle a file dragged into the window (by uploading it)
@@ -549,7 +565,22 @@ export default Ember.Controller.extend({
             if (!name){
                 return;
             }
-            name = name.toLowerCase();
+
+			// Todo - something to signal user that the container name was invalid
+			name = name.toLowerCase();
+
+			if (!this.containerNameIsValid(name)){
+				this.get('notifications').addNotification(Notification.create(
+					{
+						type: 'AddContainer',
+						// add the function below to stringResources module
+						text: stringResources.containerNameInvalidMessage(name),
+						// indicates it errored out
+						progress: -1
+					})
+				);
+				return;
+			}
 
             var newContainer = this.store.createRecord('container', {name: name, id: name});
 
